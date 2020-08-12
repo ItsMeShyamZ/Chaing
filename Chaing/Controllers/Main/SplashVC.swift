@@ -15,6 +15,7 @@ class SplashVC: UIViewController {
 
         DispatchQueue.main.asyncAfter(deadline: .now()+1) {
             Navigation.navigateTo(screen: UserDefaultConfig.AppState)
+            
         }
         
     }

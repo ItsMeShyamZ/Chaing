@@ -8,6 +8,7 @@
 
 import UIKit
 import CountryPickerView
+import ObjectMapper
 
 class LoginVC: UIViewController {
     
@@ -30,7 +31,7 @@ class LoginVC: UIViewController {
     }
     
     func setupView(){
-        self.setupCountryPicker()
+//        self.setupCountryPicker()
         self.loginBtn.setCorneredElevation(shadow: 2, corner: 20, color: .primaryColor)
         [self.countryCodeView,self.phoneView].forEach { (view) in
             view?.setCorneredElevation(shadow: 1, corner: 30, color: .white, clipstobound: .no)
@@ -47,8 +48,8 @@ class LoginVC: UIViewController {
     
     func setupAction(){
         self.loginBtn.addTap {
-//            self.validation()
-            self.push(from: self, ToViewContorller: TapBarViewController.initVC(storyBoardName: .home, vc: TapBarViewController.self, viewConrollerID: .TapBarView))
+            self.validation()
+ 
         }
         
         self.signupBtn.addTap {
@@ -73,24 +74,37 @@ class LoginVC: UIViewController {
     
 }
 
-extension LoginVC : CountryPickerViewDelegate, CountryPickerViewDataSource{
-    func setupCountryPicker(){
-        countryCode.delegate = self
-        countryCode.dataSource = self
-        countryCode.showCountryCodeInView = false
-        countryCode.showPhoneCodeInView = true
-        countryCode.textColor = UIColor.blackColor
-        
-        self.countryCode.setCountryByPhoneCode(Constant.country_code)
-    }
-    func countryPickerView(_ countryPickerView: CountryPickerView, didSelectCountry country: Country){
-        Log.i("CountryCode , \(country)")
-    }
-}
-
 
 extension LoginVC{
     func loginApi(with login_model : LoginReq){
-        AccountVM(vc: self).loginApiCall(data : convertToDictionary(model: login_model)!)
+        self.postLogin(loginData: login_model)
     }
+}
+extension LoginVC : PresenterOutputProtocol{
+    func showSuccess(api: String, dataArray: [Mappable]?, dataDict: Mappable?, modelClass: Any) {
+        switch String(describing: modelClass) {
+            case model.type.LoginEntity:
+                var data = dataDict as? LoginEntity
+                if !(data?.access_token ?? "").isEmpty{
+                    UserDefaultConfig.Token = data?.access_token ?? ""
+//                    showToast(msg: data?.token_type ?? "")
+                    
+                self.push(from: self, ToViewContorller: MoneyTransferVC.initVC(storyBoardName: .account, vc: MoneyTransferVC.self, viewConrollerID: .MoneyTransferVC))
+                }else{
+//                    showToasts(msg: "The given data was invalid.")
+                }
+                break
+            default: break
+        }
+    }
+    
+    func showError(error: CustomError) {
+        print("Error",error)
+    }
+    
+    
+    func postLogin(loginData : LoginReq){
+        self.presenter?.HITAPI(api: Base.login.rawValue, params: convertToDictionary(model: loginData), methodType: .POST, modelClass: LoginEntity.self, token: true)
+    }
+    
 }

@@ -8,7 +8,7 @@
 
 import Foundation
 
-public func convertToDictionary<T : Codable>(model : T) -> [String: Any]? {
+public func convertToDictionarys<T : Codable>(model : T) -> [String: Any]? {
     
     let jsonData = try! JSONEncoder().encode(model)
     let jsonString = String(data: jsonData, encoding: .utf8)!

@@ -28,8 +28,10 @@ public enum VCID : String{
     case Money = "MoneyVC"
     case Setting = "SettingVC"
     case TapBarView = "TapBarViewController"
+    case MoneyTransferVC = "MoneyTransferVC"
     case alert = "AlertVC"
     case offline = "OfflineVC"
+    case QRScanerVC = "QRScanerVC"
     
 }
 
@@ -114,6 +116,57 @@ extension UIViewController{
     
 }
 
+
+let mainPresenter : PresenterInputProtocol & InterectorToPresenterProtocol = Presenter()
+let mainInteractor : PresenterToInterectorProtocol & WebServiceToInteractor = Interactor()
+let mainRouter : PresenterToRouterProtocol = Router()
+let mainWebservice : WebServiceProtocol = Webservice()
+
+var presenterObject :PresenterInputProtocol?
+
+
+class Router: PresenterToRouterProtocol{
+    
+    static let main = UIStoryboard(name: "Main", bundle: Bundle.main)
+    static let home = UIStoryboard(name: "Home", bundle: Bundle.main)
+    
+    static func createModule() -> UIViewController {
+               
+        if !UserDefaultConfig.Token.isEmpty {
+            let view = ViewController.initVC(storyBoardName: .main, vc: ViewController.self, viewConrollerID: .viewcontroller)
+            view.presenter = mainPresenter
+            mainPresenter.view = view
+            mainPresenter.interactor = mainInteractor
+            mainPresenter.router = mainRouter
+            mainInteractor.presenter = mainPresenter
+            mainInteractor.webService = mainWebservice
+            mainWebservice.interactor = mainInteractor
+            presenterObject = view.presenter
+            let navigationController = UINavigationController(rootViewController: view)
+            navigationController.isNavigationBarHidden = true
+            
+            return navigationController
+        }else{
+            //            let vc = main.instantiateViewController(withIdentifier: Storyboard.Ids.LaunchViewController)
+            let view = LoginVC.initVC(storyBoardName: .account, vc: LoginVC.self, viewConrollerID: .login)
+            view.presenter = mainPresenter
+            mainPresenter.view = view
+            mainPresenter.interactor = mainInteractor
+            mainPresenter.router = mainRouter
+            mainInteractor.presenter = mainPresenter
+            mainInteractor.webService = mainWebservice
+            mainWebservice.interactor = mainInteractor
+            presenterObject = view.presenter
+            let navigationController = UINavigationController(rootViewController: view)
+            navigationController.isNavigationBarHidden = true
+            return navigationController
+        }
+        
+    }
+    
+}
+
+
 struct Navigation {
     
     static func navigateTo(screen name : String){
@@ -121,7 +174,7 @@ struct Navigation {
         var rootVC : UIViewController?
         switch name {
         case NavigationOption.onboard.rawValue:
-            rootVC = ViewController.initVC(storyBoardName: .main, vc: ViewController.self, viewConrollerID: .viewcontroller)
+            rootVC = Router.createModule()
         case NavigationOption.logout.rawValue:
             let domain = Bundle.main.bundleIdentifier!
             UserDefaults.standard.removePersistentDomain(forName: domain)
@@ -134,17 +187,17 @@ struct Navigation {
             rootVC = LoginVC.initVC(storyBoardName: .account, vc: LoginVC.self, viewConrollerID: .login)
        
         default:
-              rootVC = ViewController.initVC(storyBoardName: .main, vc: ViewController.self, viewConrollerID: .viewcontroller)
+              rootVC = Router.createModule()
         }
-        let navigationController = UINavigationController(rootViewController: rootVC!)
-        navigationController.navigationBar.isHidden = true
-        navigationController.navigationBar.tintColor = UIColor.whiteColor
+//        let navigationController = UINavigationController(rootViewController: rootVC!)
+//        navigationController.navigationBar.isHidden = true
+//        navigationController.navigationBar.tintColor = UIColor.whiteColor
         if #available(iOS 13.0,*){
-            UIApplication.shared.windows.first?.rootViewController = navigationController
+            UIApplication.shared.windows.first?.rootViewController = rootVC
             UIApplication.shared.windows.first?.makeKeyAndVisible()
         }else{
             let appDelegate = UIApplication.shared.delegate as! AppDelegate
-            appDelegate.window?.rootViewController = navigationController
+            appDelegate.window?.rootViewController = rootVC
             appDelegate.window?.makeKeyAndVisible()
         }
     }

@@ -20,4 +20,6 @@ target 'Chaing' do
  pod 'Socket.IO-Client-Swift'
  pod 'SwiftyJSON'
  pod 'JWTDecode', '~> 2.1'
+ pod 'Alamofire','4.8.2'
+ pod 'AlamofireObjectMapper'
 end
